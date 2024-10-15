@@ -17,6 +17,7 @@ use std::time::Instant;
 #[derive(Debug, Default)]
 struct Connections {
     appwindow_block_pinch_zoom_bind: Option<glib::Binding>,
+    appwindow_block_touch_scrolling_bind: Option<glib::Binding>,
     appwindow_show_scrollbars_bind: Option<glib::Binding>,
     appwindow_inertial_scrolling_bind: Option<glib::Binding>,
     appwindow_righthanded_bind: Option<glib::Binding>,
@@ -32,6 +33,7 @@ mod imp {
         pub(crate) canvas_touch_drawing_handler: RefCell<Option<glib::SignalHandlerId>>,
         pub(crate) show_scrollbars: Cell<bool>,
         pub(crate) block_pinch_zoom: Cell<bool>,
+        pub(crate) block_touch_scrolling: Cell<bool>,
         pub(crate) inertial_scrolling: Cell<bool>,
         pub(crate) pointer_pos: Cell<Option<na::Vector2<f64>>>,
         pub(crate) last_contextmenu_pos: Cell<Option<na::Vector2<f64>>>,
@@ -123,6 +125,7 @@ mod imp {
                 canvas_touch_drawing_handler: RefCell::new(None),
                 show_scrollbars: Cell::new(false),
                 block_pinch_zoom: Cell::new(false),
+                block_touch_scrolling: Cell::new(false),
                 inertial_scrolling: Cell::new(true),
                 pointer_pos: Cell::new(None),
                 last_contextmenu_pos: Cell::new(None),
@@ -233,6 +236,9 @@ mod imp {
                     glib::ParamSpecBoolean::builder("block-pinch-zoom")
                         .default_value(false)
                         .build(),
+                    glib::ParamSpecBoolean::builder("block-touch-scrolling")
+                        .default_value(false)
+                        .build(),
                     glib::ParamSpecBoolean::builder("inertial-scrolling")
                         .default_value(true)
                         .build(),
@@ -245,6 +251,7 @@ mod imp {
             match pspec.name() {
                 "show-scrollbars" => self.show_scrollbars.get().to_value(),
                 "block-pinch-zoom" => self.block_pinch_zoom.get().to_value(),
+                "block-touch-scrolling" => self.block_touch_scrolling.get().to_value(),
                 "inertial-scrolling" => self.inertial_scrolling.get().to_value(),
                 _ => unimplemented!(),
             }
@@ -267,6 +274,13 @@ mod imp {
                         .expect("The value needs to be of type `bool`");
                     self.block_pinch_zoom.replace(block_pinch_zoom);
                     self.canvas_zoom_gesture_update();
+                }
+                "block-touch-scrolling" => {
+                    let block_touch_scrolling = value
+                        .get::<bool>()
+                        .expect("The value needs to be of type `bool`");
+                    self.block_touch_scrolling.replace(block_touch_scrolling);
+                    self.canvas_touch_scrolling_gesture_update();
                 }
                 "inertial-scrolling" => {
                     let inertial_scrolling = value
@@ -291,6 +305,15 @@ mod imp {
             } else {
                 self.canvas_zoom_gesture
                     .set_propagation_phase(PropagationPhase::None);
+            }
+        }
+
+        fn canvas_touch_scrolling_gesture_update(&self) {
+            if !self.block_touch_scrolling.get() && !self.canvas.touch_drawing() {
+                //TODO
+                self.scroller.set_hscroll_policy
+            } else {
+                //TODO
             }
         }
 
@@ -784,6 +807,7 @@ impl RnCanvasWrapper {
     pub(crate) fn set_show_scrollbars(&self, show_scrollbars: bool) {
         self.set_property("show-scrollbars", show_scrollbars.to_value());
     }
+
     #[allow(unused)]
     pub(crate) fn block_pinch_zoom(&self) -> bool {
         self.property::<bool>("block-pinch-zoom")
@@ -792,6 +816,16 @@ impl RnCanvasWrapper {
     #[allow(unused)]
     pub(crate) fn set_block_pinch_zoom(&self, block_pinch_zoom: bool) {
         self.set_property("block-pinch-zoom", block_pinch_zoom);
+    }
+
+    #[allow(unused)]
+    pub(crate) fn block_touch_scrolling(&self) -> bool {
+        self.property::<bool>("block-touch-scrolling")
+    }
+
+    #[allow(unused)]
+    pub(crate) fn set_block_touch_scrolling(&self, block_touch_scrolling: bool) {
+        self.set_property("block-touch-scrolling", block_touch_scrolling);
     }
 
     #[allow(unused)]
@@ -833,6 +867,11 @@ impl RnCanvasWrapper {
             .sync_create()
             .build();
 
+        let appwindow_block_touch_scrolling_bind = appwindow
+            .bind_property("block-touch-scrolling", self, "block_touch_scrolling")
+            .sync_create()
+            .build();
+
         let appwindow_show_scrollbars_bind = appwindow
             .sidebar()
             .settings_panel()
@@ -869,6 +908,12 @@ impl RnCanvasWrapper {
             old.unbind()
         }
         if let Some(old) = connections
+            .appwindow_block_touch_scrolling_bind
+            .replace(appwindow_block_touch_scrolling_bind)
+        {
+            old.unbind()
+        }
+        if let Some(old) = connections
             .appwindow_show_scrollbars_bind
             .replace(appwindow_show_scrollbars_bind)
         {
@@ -897,6 +942,9 @@ impl RnCanvasWrapper {
 
         let mut connections = self.imp().connections.borrow_mut();
         if let Some(old) = connections.appwindow_block_pinch_zoom_bind.take() {
+            old.unbind();
+        }
+        if let Some(old) = connections.appwindow_block_touch_scrolling_bind.take() {
             old.unbind();
         }
         if let Some(old) = connections.appwindow_show_scrollbars_bind.take() {

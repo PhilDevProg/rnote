@@ -83,6 +83,9 @@ impl RnAppWindow {
         let action_block_pinch_zoom =
             gio::PropertyAction::new("block-pinch-zoom", self, "block-pinch-zoom");
         self.add_action(&action_block_pinch_zoom);
+        let action_block_touch_scrolling =
+            gio::PropertyAction::new("block-touch-scrolling", self, "block-touch-scrolling");
+        self.add_action(&action_block_touch_scrolling);
         let action_respect_borders =
             gio::PropertyAction::new("respect-borders", self, "respect-borders");
         self.add_action(&action_respect_borders);

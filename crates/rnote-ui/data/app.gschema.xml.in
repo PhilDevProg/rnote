@@ -141,6 +141,10 @@
       <default>false</default>
       <summary>block pinch to zoom</summary>
     </key>
+    <key name="block-touch-scrolling" type="b">
+      <default>false</default>
+      <summary>block touch scrolling</summary>
+    </key>
     <key name="respect-borders" type="b">
       <default>false</default>
       <summary>respect borders when pasting</summary>

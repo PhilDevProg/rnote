@@ -24,6 +24,7 @@ pub(crate) struct RnAppWindow {
     pub(crate) autosave_interval_secs: Cell<u32>,
     pub(crate) righthanded: Cell<bool>,
     pub(crate) block_pinch_zoom: Cell<bool>,
+    pub(crate) block_touch_scrolling: Cell<bool>,
     pub(crate) respect_borders: Cell<bool>,
     pub(crate) touch_drawing: Cell<bool>,
     pub(crate) focus_mode: Cell<bool>,
@@ -54,6 +55,7 @@ impl Default for RnAppWindow {
             autosave_interval_secs: Cell::new(super::RnAppWindow::AUTOSAVE_INTERVAL_DEFAULT),
             righthanded: Cell::new(true),
             block_pinch_zoom: Cell::new(false),
+            block_touch_scrolling: Cell::new(false),
             respect_borders: Cell::new(false),
             touch_drawing: Cell::new(false),
             focus_mode: Cell::new(false),
@@ -136,6 +138,9 @@ impl ObjectImpl for RnAppWindow {
                 glib::ParamSpecBoolean::builder("block-pinch-zoom")
                     .default_value(false)
                     .build(),
+                glib::ParamSpecBoolean::builder("block-touch-scrolling")
+                    .default_value(false)
+                    .build(),
                 glib::ParamSpecBoolean::builder("touch-drawing")
                     .default_value(false)
                     .build(),
@@ -157,6 +162,7 @@ impl ObjectImpl for RnAppWindow {
             "autosave-interval-secs" => self.autosave_interval_secs.get().to_value(),
             "righthanded" => self.righthanded.get().to_value(),
             "block-pinch-zoom" => self.block_pinch_zoom.get().to_value(),
+            "block-touch-scrolling" => self.block_touch_scrolling.get().to_value(),
             "respect-borders" => self.respect_borders.get().to_value(),
             "touch-drawing" => self.touch_drawing.get().to_value(),
             "focus-mode" => self.focus_mode.get().to_value(),
@@ -210,6 +216,11 @@ impl ObjectImpl for RnAppWindow {
                 let block_pinch_zoom: bool =
                     value.get().expect("The value needs to be of type `bool`");
                 self.block_pinch_zoom.replace(block_pinch_zoom);
+            }
+            "block-touch-scrolling" => {
+                let block_touch_scrolling: bool =
+                    value.get().expect("The value needs to be of type `bool`");
+                self.block_touch_scrolling.replace(block_touch_scrolling);
             }
             "respect-borders" => {
                 let respect_borders: bool =
