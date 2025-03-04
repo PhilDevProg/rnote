@@ -1,8 +1,8 @@
 // Imports
 use crate::{RnAppWindow, RnCanvasWrapper};
 use gtk4::{
-    glib, glib::clone, prelude::*, subclass::prelude::*, Button, CompositeTemplate, MenuButton,
-    Popover, ToggleButton,
+    Button, CompositeTemplate, MenuButton, Popover, ToggleButton, glib, glib::clone, prelude::*,
+    subclass::prelude::*,
 };
 use rnote_engine::pens::pensconfig::toolsconfig::ToolStyle;
 
@@ -18,6 +18,8 @@ mod imp {
         pub(crate) toolstyle_offsetcamera_toggle: TemplateChild<ToggleButton>,
         #[template_child]
         pub(crate) toolstyle_zoom_toggle: TemplateChild<ToggleButton>,
+        #[template_child]
+        pub(crate) toolstyle_laser_toggle: TemplateChild<ToggleButton>,
         #[template_child]
         pub(crate) verticalspace_menubutton: TemplateChild<MenuButton>,
         #[template_child]
@@ -88,6 +90,8 @@ impl RnToolsPage {
             Some(ToolStyle::OffsetCamera)
         } else if imp.toolstyle_zoom_toggle.is_active() {
             Some(ToolStyle::Zoom)
+        } else if imp.toolstyle_laser_toggle.is_active() {
+            Some(ToolStyle::Laser)
         } else {
             None
         }
@@ -106,6 +110,7 @@ impl RnToolsPage {
             ToolStyle::VerticalSpace => imp.toolstyle_verticalspace_toggle.set_active(true),
             ToolStyle::OffsetCamera => imp.toolstyle_offsetcamera_toggle.set_active(true),
             ToolStyle::Zoom => imp.toolstyle_zoom_toggle.set_active(true),
+            ToolStyle::Laser => imp.toolstyle_laser_toggle.set_active(true),
         }
     }
 
@@ -124,6 +129,8 @@ impl RnToolsPage {
 
                 if toggle.is_active() {
                     canvas.engine_mut().pens_config.tools_config.style = ToolStyle::VerticalSpace;
+                    let widget_flags = canvas.engine_mut().reinstall_pen_current_style();
+                    canvas.emit_handle_widget_flags(widget_flags);
                 }
             }
         ));
@@ -138,6 +145,8 @@ impl RnToolsPage {
 
                 if toggle.is_active() {
                     canvas.engine_mut().pens_config.tools_config.style = ToolStyle::OffsetCamera;
+                    let widget_flags = canvas.engine_mut().reinstall_pen_current_style();
+                    canvas.emit_handle_widget_flags(widget_flags);
                 }
             }
         ));
@@ -152,6 +161,24 @@ impl RnToolsPage {
 
                 if toggle.is_active() {
                     canvas.engine_mut().pens_config.tools_config.style = ToolStyle::Zoom;
+                    let widget_flags = canvas.engine_mut().reinstall_pen_current_style();
+                    canvas.emit_handle_widget_flags(widget_flags);
+                }
+            }
+        ));
+
+        imp.toolstyle_laser_toggle.connect_toggled(clone!(
+            #[weak]
+            appwindow,
+            move |toggle| {
+                let Some(canvas) = appwindow.active_tab_canvas() else {
+                    return;
+                };
+
+                if toggle.is_active() {
+                    canvas.engine_mut().pens_config.tools_config.style = ToolStyle::Laser;
+                    let widget_flags = canvas.engine_mut().reinstall_pen_current_style();
+                    canvas.emit_handle_widget_flags(widget_flags);
                 }
             }
         ));

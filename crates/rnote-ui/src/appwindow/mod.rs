@@ -5,18 +5,18 @@ mod imp;
 
 // Imports
 use crate::{
-    config, dialogs, FileType, RnApp, RnCanvas, RnCanvasWrapper, RnMainHeader, RnOverlays,
-    RnSidebar,
+    FileType, RnApp, RnCanvas, RnCanvasWrapper, RnMainHeader, RnOverlays, RnSidebar, config,
+    dialogs,
 };
 use adw::{prelude::*, subclass::prelude::*};
 use gettextrs::gettext;
-use gtk4::{gdk, gio, glib, Application, IconTheme};
+use gtk4::{Application, IconTheme, gdk, gio, glib};
 use rnote_compose::Color;
 use rnote_engine::ext::GdkRGBAExt;
+use rnote_engine::pens::PenStyle;
 use rnote_engine::pens::pensconfig::brushconfig::BrushStyle;
 use rnote_engine::pens::pensconfig::shaperconfig::ShaperStyle;
-use rnote_engine::pens::PenStyle;
-use rnote_engine::{engine::EngineTask, WidgetFlags};
+use rnote_engine::{WidgetFlags, engine::EngineTask};
 use std::path::Path;
 use tracing::{error, warn};
 
@@ -102,6 +102,10 @@ impl RnAppWindow {
 
     pub(crate) fn app(&self) -> RnApp {
         self.application().unwrap().downcast::<RnApp>().unwrap()
+    }
+
+    pub(crate) fn overview(&self) -> adw::TabOverview {
+        self.imp().overview.get()
     }
 
     pub(crate) fn main_header(&self) -> RnMainHeader {
